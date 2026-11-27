@@ -203,7 +203,10 @@ void GPKISMVocalSuite::OnReset()
 
 void GPKISMVocalSuite::ProcessBlock(sample** inputs, sample** outputs, int nFrames)
 {
-  const int nChans = std::min(2, NOutChansConnected());
+  if (!inputs || !outputs || nFrames <= 0)
+    return;
+
+  const int nChans = std::min(2, std::min(NInChansConnected(), NOutChansConnected()));
   if (nChans <= 0)
     return;
 
@@ -226,12 +229,13 @@ void GPKISMVocalSuite::ProcessBlock(sample** inputs, sample** outputs, int nFram
   float* framePtrs[2] = { &frame[0], &frame[1] };
   for (int s = 0; s < nFrames; ++s) {
     for (int c = 0; c < nChans; ++c)
-      frame[c] = static_cast<float>(inputs[c][s]);
+      frame[c] = inputs[c] ? static_cast<float>(inputs[c][s]) : 0.0f;
 
     mDSP.process(framePtrs, nChans, 1);
 
     for (int c = 0; c < nChans; ++c)
-      outputs[c][s] = static_cast<sample>(frame[c]);
+      if (outputs[c])
+        outputs[c][s] = static_cast<sample>(frame[c]);
   }
 }
 #endif

@@ -15,8 +15,14 @@ float GPKISMVocalDSP::clamp01(float x) noexcept
 void GPKISMVocalDSP::prepare(double sampleRate) noexcept
 {
   mSampleRate = std::max(8000.0, sampleRate);
+  const float sr = static_cast<float>(mSampleRate);
+
+  mHpCoeff = std::exp(-2.0f * 3.14159265358979323846f * 75.0f / sr);
+  mToneCoeff = 1.0f - std::exp(-2.0f * 3.14159265358979323846f * 240.0f / sr);
+  mAttackCoeff = std::exp(-1.0f / (0.010f * sr));
+  mReleaseCoeff = std::exp(-1.0f / (0.140f * sr));
+  mSmoothCoeff = std::exp(-1.0f / (0.020f * sr));
   reset();
-  setParams(VocalParams{});
 }
 
 void GPKISMVocalDSP::reset() noexcept
@@ -32,8 +38,6 @@ void GPKISMVocalDSP::setParams(const VocalParams& p) noexcept
 
   mHpCoeff = std::exp(-2.0f * 3.14159265358979323846f * hp / sr);
   mToneCoeff = 1.0f - std::exp(-2.0f * 3.14159265358979323846f * 240.0f / sr);
-  mAttackCoeff = std::exp(-1.0f / (0.010f * sr));
-  mReleaseCoeff = std::exp(-1.0f / (0.140f * sr));
 
   mInputGain = dbToGain(std::max(-18.0f, std::min(6.0f, p.inputDb)));
   mOutputGain = dbToGain(std::max(-18.0f, std::min(6.0f, p.outputDb)));
@@ -48,47 +52,63 @@ void GPKISMVocalDSP::setParams(const VocalParams& p) noexcept
 
 float GPKISMVocalDSP::processSample(float input, ChannelState& state) noexcept
 {
-  // Gain staging is applied before the dry/wet split so Input Trim behaves
-  // consistently at every blend setting. Output Trim is applied after mixing.
-  const float dry = input * mInputGain;
+  // 20 ms parameter glide prevents clicks when automating knobs or recalling presets.
+  const float glide = 1.0f - mSmoothCoeff;
+  mCurrentInputGain += (mInputGain - mCurrentInputGain) * glide;
+  mCurrentOutputGain += (mOutputGain - mCurrentOutputGain) * glide;
+  mCurrentCompAmount += (mCompAmount - mCurrentCompAmount) * glide;
+  mCurrentDrive += (mDrive - mCurrentDrive) * glide;
+  mCurrentHarmonicMix += (mHarmonicMix - mCurrentHarmonicMix) * glide;
+  mCurrentDryWet += (mDryWet - mCurrentDryWet) * glide;
+  mCurrentDarkness += (mDarkness - mCurrentDarkness) * glide;
+  mCurrentPresence += (mPresence - mCurrentPresence) * glide;
+  mCurrentModeDrive += (mModeDrive - mCurrentModeDrive) * glide;
+
+  // Gain staging is applied before the dry/wet split. Output trim is post-blend.
+  const float dry = input * mCurrentInputGain;
   float x = dry;
 
-  // Gentle rumble control; the original signal remains available via Dry/Wet.
+  // First-order high-pass for rumble control.
   const float hp = mHpCoeff * (state.hpY + x - state.hpX);
   state.hpX = x;
   state.hpY = hp;
   x = hp;
 
-  // Broad low-mid body and upper-mid presence controls with restrained ranges.
+  // Broad low-mid body reduction and upper-mid presence.
   state.toneY += mToneCoeff * (x - state.toneY);
   const float lowBody = state.toneY;
   const float upperDetail = x - lowBody;
-  x += (-0.24f * mDarkness * lowBody) + (0.34f * mPresence * upperDetail);
+  x += (-0.24f * mCurrentDarkness * lowBody)
+     + (0.34f * mCurrentPresence * upperDetail);
 
-  // Smooth vocal compression with continuous threshold and ratio controls.
+  // Smooth envelope detector and smoothed gain reduction.
   const float level = std::fabs(x);
-  const float coeff = level > state.envelope ? mAttackCoeff : mReleaseCoeff;
-  state.envelope = coeff * state.envelope + (1.0f - coeff) * level;
-  const float threshold = 0.72f - 0.34f * mCompAmount;
+  const float detectorCoeff = level > state.envelope ? mAttackCoeff : mReleaseCoeff;
+  state.envelope = detectorCoeff * state.envelope + (1.0f - detectorCoeff) * level;
+  const float threshold = 0.72f - 0.34f * mCurrentCompAmount;
   const float over = std::max(0.0f, state.envelope - threshold);
-  const float ratio = 1.0f + 4.0f * mCompAmount;
+  const float ratio = 1.0f + 4.0f * mCurrentCompAmount;
   const float targetGain = over > 0.0f
     ? (threshold + over / ratio) / std::max(state.envelope, 1.0e-6f)
     : 1.0f;
-  x *= targetGain;
+  const float gainCoeff = targetGain < state.compressorGain ? mAttackCoeff : mReleaseCoeff;
+  state.compressorGain = gainCoeff * state.compressorGain
+                       + (1.0f - gainCoeff) * targetGain;
+  x *= state.compressorGain;
 
-  // Controlled saturation: Drive sets intensity, Harmonic Mix sets blend.
-  const float driveFactor = 1.0f + 1.25f * mDrive * mModeDrive;
+  // Controlled saturation; Harmonic Mix controls the amount blended in.
+  const float driveFactor = 1.0f + 1.25f * mCurrentDrive * mCurrentModeDrive;
   const float saturated = std::tanh(x * driveFactor) / driveFactor;
-  const float harmonicBlend = 0.40f * mHarmonicMix;
-  const float driveBlend = 0.22f * mDrive;
+  const float harmonicBlend = 0.40f * mCurrentHarmonicMix;
+  const float driveBlend = 0.22f * mCurrentDrive;
   const float blend = std::min(0.48f, harmonicBlend + driveBlend);
   x = x * (1.0f - blend) + saturated * blend;
 
   const float wet = x;
-  const float mixed = (dry * (1.0f - mDryWet) + wet * mDryWet) * mOutputGain;
+  const float mixed = (dry * (1.0f - mCurrentDryWet) + wet * mCurrentDryWet)
+                    * mCurrentOutputGain;
 
-  // Soft safety ceiling: transparent below -0.7 dBFS, smooth above it.
+  // Smooth soft ceiling: approaches 0.98 full scale (about -0.17 dBFS).
   const float magnitude = std::fabs(mixed);
   float safe = mixed;
   if (magnitude > 0.92f)
