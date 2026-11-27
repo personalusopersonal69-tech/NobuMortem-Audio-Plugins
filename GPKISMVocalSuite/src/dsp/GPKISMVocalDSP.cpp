@@ -50,9 +50,8 @@ void GPKISMVocalDSP::setParams(const VocalParams& p) noexcept
   mModeDrive = (p.mode == PerformanceMode::Intense) ? 1.10f : 1.0f;
 }
 
-float GPKISMVocalDSP::processSample(float input, ChannelState& state) noexcept
+void GPKISMVocalDSP::smoothParameters() noexcept
 {
-  // 20 ms parameter glide prevents clicks when automating knobs or recalling presets.
   const float glide = 1.0f - mSmoothCoeff;
   mCurrentInputGain += (mInputGain - mCurrentInputGain) * glide;
   mCurrentOutputGain += (mOutputGain - mCurrentOutputGain) * glide;
@@ -63,8 +62,10 @@ float GPKISMVocalDSP::processSample(float input, ChannelState& state) noexcept
   mCurrentDarkness += (mDarkness - mCurrentDarkness) * glide;
   mCurrentPresence += (mPresence - mCurrentPresence) * glide;
   mCurrentModeDrive += (mModeDrive - mCurrentModeDrive) * glide;
+}
 
-  // Gain staging is applied before the dry/wet split. Output trim is post-blend.
+float GPKISMVocalDSP::processSample(float input, ChannelState& state) noexcept
+{
   const float dry = input * mCurrentInputGain;
   float x = dry;
 
@@ -123,13 +124,13 @@ void GPKISMVocalDSP::process(float* const* channels, int channelCount, int sampl
     return;
 
   const int count = std::min(2, std::max(0, channelCount));
-  for (int ch = 0; ch < count; ++ch) {
-    if (!channels[ch])
-      continue;
-
-    ChannelState& state = mState[ch];
-    for (int i = 0; i < sampleCount; ++i)
-      channels[ch][i] = processSample(channels[ch][i], state);
+  for (int i = 0; i < sampleCount; ++i) {
+    smoothParameters();
+    for (int ch = 0; ch < count; ++ch) {
+      if (!channels[ch])
+        continue;
+      channels[ch][i] = processSample(channels[ch][i], mState[ch]);
+    }
   }
 }
 

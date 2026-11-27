@@ -38,6 +38,7 @@ private:
 
   static float dbToGain(float db) noexcept;
   static float clamp01(float x) noexcept;
+  void smoothParameters() noexcept;
   float processSample(float input, ChannelState& state) noexcept;
 
   double mSampleRate = 44100.0;
@@ -48,7 +49,7 @@ private:
   float mSmoothCoeff = 0.996f;
 
   // Target values are updated by setParams; current values glide smoothly
-  // toward them in processSample to avoid zipper noise during automation.
+  // toward them once per sample frame, keeping stereo channels phase-aligned.
   float mInputGain = 1.0f;
   float mOutputGain = 1.0f;
   float mCompAmount = 0.22f;
