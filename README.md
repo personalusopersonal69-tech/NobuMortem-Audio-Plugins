@@ -4,13 +4,23 @@ Free, lightweight native audio tools for FL Studio on Windows 10/11 x64.
 
 ## Collection
 
-- **GPKISM Vocal Suite** — dark, elegant vocal tone shaping, dynamics, controlled harmonic saturation, input/output gain staging and dry/wet blend. Includes Nobu Natural, GPKISM 55%, and Kaya Inspired character starting points.
+- **GPKISM Vocal Suite 0.3.1** — dark, elegant vocal tone shaping, dynamics, controlled harmonic saturation, input/output gain staging and dry/wet blend.
 - **Guttural Forge** — planned industrial/electro-metal guttural enhancement, designed to preserve the original vocal identity.
 - **Vocal Tuner Pro** — planned pitch detection and correction with user-selected key/scale, correction speed, and natural/creative modes.
 
+## GPKISM Vocal Suite controls
+
+- Darkness, Presence, Compression, Drive and Harmonic Mix.
+- Dry / Wet, Input Trim and Output Trim.
+- Clean / Intense performance modes.
+- **Nobu Natural**, **GPKISM 55%**, **Kaya Inspired**, and **Custom** character settings.
+- Selecting a character recalls its actual parameter values so the knob positions, host parameters and DSP remain aligned. Moving a knob changes the character selector to **Custom**.
+
+The character presets are tonal starting points, not voice cloning or a claim of matching another singer's identity.
+
 ## Visual identity
 
-Gothic Visual Kei and dark romantic styling: black surfaces, silver text, deep violet accents, clear parameter labels and readable values. Artist references are aesthetic direction only; this project does not clone a singer's voice or copy protected artwork.
+Gothic Visual Kei and dark romantic styling: black surfaces, silver text, deep violet accents, separate readable parameter labels, and visible numeric values with units.
 
 ## Technical goals
 
@@ -20,6 +30,6 @@ Gothic Visual Kei and dark romantic styling: black surfaces, silver text, deep v
 - Smooth dynamics and controlled saturation with a soft output safety ceiling.
 - Build validation through GitHub Actions.
 
-## Current status
+## Release status
 
-GPKISM Vocal Suite 0.3.0 is in development. A successful CI build confirms compilation, not final sound quality or DAW compatibility. The editor and audio behavior must still be checked in FL Studio on a real project before calling the release production-ready.
+Version 0.3.1 has passed the Windows x64 CI build. This confirms compilation, not visual validation inside FL Studio or final sound-quality approval. The editor and audio behavior still require a real FL Studio test before calling the release production-ready.
