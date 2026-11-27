@@ -3,7 +3,7 @@
 #include "src/dsp/GPKISMVocalDSP.h"
 using namespace iplug;
 using namespace igraphics;
-enum EParams { kParamInput = 0, kDarkness, kPresence, kCompression, kDrive, kHarmonicMix, kDryWet, kParamOutput, kMode, kNumParams };
+enum EParams { kParamInput = 0, kDarkness, kPresence, kCompression, kDrive, kHarmonicMix, kDryWet, kParamOutput, kMode, kPreset, kNumParams };
 class GPKISMVocalSuite final : public Plugin {
 public:
   GPKISMVocalSuite(const InstanceInfo& info);
