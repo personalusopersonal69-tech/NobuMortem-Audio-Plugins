@@ -31,6 +31,7 @@ private:
   struct ChannelState {
     float hpX = 0.0f;
     float hpY = 0.0f;
+    float toneY = 0.0f;
     float envelope = 0.0f;
   };
 
