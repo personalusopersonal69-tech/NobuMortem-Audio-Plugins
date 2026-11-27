@@ -154,7 +154,7 @@ void GPKISMVocalSuite::OnParamChangeUI(int paramIdx, EParamSource source)
     if (selected >= 0 && selected <= 2)
       mPendingPreset.store(selected);
   }
-  else if (paramIdx >= kDarkness && paramIdx <= kParamOutput) {
+  else if (paramIdx >= kParamInput && paramIdx <= kParamOutput) {
     mPendingPreset.store(3); // Custom
   }
 }
