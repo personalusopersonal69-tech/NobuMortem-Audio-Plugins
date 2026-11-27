@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.25)
+project(GPKISMVocalSuite VERSION 0.1.0)
+if(NOT DEFINED IPLUG2_DIR)
+  set(IPLUG2_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../modules/iPlug2" CACHE PATH "iPlug2 root")
+endif()
+include(${IPLUG2_DIR}/iPlug2.cmake)
+find_package(iPlug2 REQUIRED)
+iplug_add_plugin(GPKISMVocalSuite
+  SOURCES GPKISMVocalSuite.cpp GPKISMVocalSuite.h src/dsp/GPKISMVocalDSP.cpp src/dsp/GPKISMVocalDSP.h
+  FORMATS VST3 APP
+)
