@@ -19,6 +19,16 @@ GPKISMVocalSuite::GPKISMVocalSuite(const InstanceInfo& info)
   GetParam(kPreset)->InitEnum("Vocal Character", 0,
     {"Nobu Natural", "GPKISM 55%", "Kaya Inspired", "Custom"});
 
+  // Keep the on-screen values clean and readable at a glance.
+  GetParam(kParamInput)->SetDisplayPrecision(1);
+  GetParam(kParamOutput)->SetDisplayPrecision(1);
+  GetParam(kDarkness)->SetDisplayPrecision(0);
+  GetParam(kPresence)->SetDisplayPrecision(0);
+  GetParam(kCompression)->SetDisplayPrecision(0);
+  GetParam(kDrive)->SetDisplayPrecision(0);
+  GetParam(kHarmonicMix)->SetDisplayPrecision(0);
+  GetParam(kDryWet)->SetDisplayPrecision(0);
+
 #if IPLUG_EDITOR
   mMakeGraphicsFunc = [&]() {
     return MakeGraphics(*this, PLUG_WIDTH, PLUG_HEIGHT, PLUG_FPS,
