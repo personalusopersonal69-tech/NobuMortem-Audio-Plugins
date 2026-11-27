@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.25)
+project(NobuMortemAudioPlugins LANGUAGES C CXX)
+set(IPLUG2_DIR "${CMAKE_SOURCE_DIR}/modules/iPlug2" CACHE PATH "iPlug2 framework root")
+include(${IPLUG2_DIR}/iPlug2.cmake)
+find_package(iPlug2 REQUIRED)
+add_subdirectory(GPKISMVocalSuite)
