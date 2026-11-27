@@ -7,5 +7,5 @@ include(${IPLUG2_DIR}/iPlug2.cmake)
 find_package(iPlug2 REQUIRED)
 iplug_add_plugin(GPKISMVocalSuite
   SOURCES GPKISMVocalSuite.cpp GPKISMVocalSuite.h src/dsp/GPKISMVocalDSP.cpp src/dsp/GPKISMVocalDSP.h
-  FORMATS VST3 APP
+  FORMATS VST3
 )
