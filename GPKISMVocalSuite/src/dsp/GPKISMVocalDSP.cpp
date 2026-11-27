@@ -48,22 +48,24 @@ void GPKISMVocalDSP::setParams(const VocalParams& p) noexcept
 
 float GPKISMVocalDSP::processSample(float input, ChannelState& state) noexcept
 {
-  const float dry = input;
-  float x = input * mInputGain;
+  // Gain staging is applied before the dry/wet split so Input Trim behaves
+  // consistently at every blend setting. Output Trim is applied after mixing.
+  const float dry = input * mInputGain;
+  float x = dry;
 
-  // Gentle rumble control; the original dry path remains available via Dry/Wet.
+  // Gentle rumble control; the original signal remains available via Dry/Wet.
   const float hp = mHpCoeff * (state.hpY + x - state.hpX);
   state.hpX = x;
   state.hpY = hp;
   x = hp;
 
-  // Broad low-mid body and upper-mid presence controls with audible but restrained ranges.
+  // Broad low-mid body and upper-mid presence controls with restrained ranges.
   state.toneY += mToneCoeff * (x - state.toneY);
   const float lowBody = state.toneY;
   const float upperDetail = x - lowBody;
   x += (-0.24f * mDarkness * lowBody) + (0.34f * mPresence * upperDetail);
 
-  // Smooth vocal compression. The threshold and ratio move continuously with the knob.
+  // Smooth vocal compression with continuous threshold and ratio controls.
   const float level = std::fabs(x);
   const float coeff = level > state.envelope ? mAttackCoeff : mReleaseCoeff;
   state.envelope = coeff * state.envelope + (1.0f - coeff) * level;
@@ -75,7 +77,7 @@ float GPKISMVocalDSP::processSample(float input, ChannelState& state) noexcept
     : 1.0f;
   x *= targetGain;
 
-  // Drive controls saturation intensity; Harmonic Mix controls how much is blended in.
+  // Controlled saturation: Drive sets intensity, Harmonic Mix sets blend.
   const float driveFactor = 1.0f + 1.25f * mDrive * mModeDrive;
   const float saturated = std::tanh(x * driveFactor) / driveFactor;
   const float harmonicBlend = 0.40f * mHarmonicMix;
@@ -83,10 +85,10 @@ float GPKISMVocalDSP::processSample(float input, ChannelState& state) noexcept
   const float blend = std::min(0.48f, harmonicBlend + driveBlend);
   x = x * (1.0f - blend) + saturated * blend;
 
-  const float wet = x * mOutputGain;
-  const float mixed = dry * (1.0f - mDryWet) + wet * mDryWet;
+  const float wet = x;
+  const float mixed = (dry * (1.0f - mDryWet) + wet * mDryWet) * mOutputGain;
 
-  // Transparent safety ceiling: only engages on peaks above -0.7 dBFS.
+  // Soft safety ceiling: transparent below -0.7 dBFS, smooth above it.
   const float magnitude = std::fabs(mixed);
   float safe = mixed;
   if (magnitude > 0.92f)
