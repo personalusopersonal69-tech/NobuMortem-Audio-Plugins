@@ -1,0 +1,38 @@
+name: Build GPKISM Vocal Suite (Windows x64)
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'GPKISMVocalSuite/**'
+      - 'modules/iPlug2'
+      - 'CMakeLists.txt'
+      - '.github/workflows/build-gpkism-windows.yml'
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: microsoft/setup-msbuild@v2
+      - name: Download iPlug2 prebuilt dependencies
+        shell: bash
+        run: |
+          cd modules/iPlug2/Dependencies
+          ./download-prebuilt-libs.sh
+      - name: Download VST3 SDK
+        shell: bash
+        run: |
+          cd modules/iPlug2/Dependencies/IPlug
+          ./download-vst3-sdk.sh
+      - name: Configure x64
+        run: cmake -S . -B build -A x64 -DCMAKE_BUILD_TYPE=Release
+      - name: Build VST3 and app
+        run: cmake --build build --config Release --parallel 2
+      - name: Upload build output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: GPKISM-Vocal-Suite-Windows-x64
+          path: build/**/GPKISMVocalSuite*.vst3
+          if-no-files-found: warn
