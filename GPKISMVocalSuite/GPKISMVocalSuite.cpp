@@ -36,7 +36,8 @@ GPKISMVocalSuite::GPKISMVocalSuite(const InstanceInfo& info) : Plugin(info, Make
     g->AttachControl(new IVSwitchControl(IRECT(b.L,b.B-36.f,b.L+190.f,b.B-2.f),kMode,"CLEAN / INTENSE"));
     g->AttachControl(new ITextControl(IRECT(b.R-360.f,b.B-32.f,b.R,b.B-2.f),
       "SUBTLE COLOUR  /  PRESERVE YOUR VOICE",IText(10,IColor(255,160,135,185),"Arial",EAlign::Far)));
-  };#endif
+  };
+#endif
 }
 #if IPLUG_DSP
 void GPKISMVocalSuite::OnReset() { mDSP.prepare(GetSampleRate()); }
