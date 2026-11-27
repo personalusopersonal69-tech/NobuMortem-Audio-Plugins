@@ -49,7 +49,8 @@ float GPKISMVocalDSP::processSample(float input, ChannelState& s) noexcept {
   // Broad tonal shaping: restrained darkening and presence emphasis.
   // These one-pole components are intentionally inexpensive.
   const float darkCoeff = 0.035f + 0.12f * mDarkness;
-  const float low = darkCoeff * x + (1.0f - darkCoeff) * s.hpY;
+  s.toneY += darkCoeff * (x - s.toneY);
+  const float low = s.toneY;
   const float presence = x - low;
   x = x - 0.12f * mDarkness * low + 0.10f * mPresence * presence;
 
@@ -67,11 +68,16 @@ float GPKISMVocalDSP::processSample(float input, ChannelState& s) noexcept {
   // Parallel, bounded harmonic colour. Dry signal remains present to preserve identity.
   const float drive = 1.0f + 7.0f * mDrive * mModeDrive;
   const float saturated = std::tanh(x * drive) / std::max(1.0f, std::tanh(drive));
-  const float coloured = x * (1.0f - mHarmonicMix) + saturated * mHarmonicMix;
-  x = x * (1.0f - mHarmonicMix) + coloured * mHarmonicMix;
+  x = x * (1.0f - mHarmonicMix) + saturated * mHarmonicMix;
 
   const float wet = x * mOutputGain;
-  return dry * (1.0f - mDryWet) + wet * mDryWet;
+  float mixed = dry * (1.0f - mDryWet) + wet * mDryWet;
+  // Soft output protection; avoids a hard digital clip at the ceiling.
+  if (std::fabs(mixed) > 0.90f) {
+    const float excess = std::fabs(mixed) - 0.90f;
+    mixed = std::copysign(0.90f + 0.08f * std::tanh(excess / 0.08f), mixed);
+  }
+  return mixed;
 }
 
 void GPKISMVocalDSP::process(float* const* channels, int channelCount,
@@ -85,7 +91,7 @@ void GPKISMVocalDSP::process(float* const* channels, int channelCount,
       float y = processSample(channels[ch][i], state);
       // Defensive finite-value guard and conservative output ceiling.
       if (!std::isfinite(y)) y = 0.0f;
-      channels[ch][i] = std::max(-0.98f, std::min(0.98f, y));
+      channels[ch][i] = y;
     }
   }
 }
