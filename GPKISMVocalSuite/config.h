@@ -1,8 +1,8 @@
 #pragma once
 #define PLUG_NAME "GPKISM Vocal Suite"
 #define PLUG_MFR "Nobu Mortem"
-#define PLUG_VERSION_HEX 0x00010000
-#define PLUG_VERSION_STR "0.1.0"
+#define PLUG_VERSION_HEX 0x00020000
+#define PLUG_VERSION_STR "0.2.0"
 #define PLUG_UNIQUE_ID 'NbG1'
 #define PLUG_MFR_ID 'NbMt'
 #define PLUG_URL_STR "https://github.com/personalusopersonal69-tech/NobuMortem-Audio-Plugins"
@@ -22,7 +22,7 @@
 #define PLUG_DOES_STATE_CHUNKS 0
 #define PLUG_HAS_UI 1
 #define PLUG_WIDTH 900
-#define PLUG_HEIGHT 560
+#define PLUG_HEIGHT 640
 #define PLUG_FPS 30
 #define PLUG_SHARED_RESOURCES 0
 #define PLUG_HOST_RESIZE 0
