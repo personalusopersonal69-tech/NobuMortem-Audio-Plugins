@@ -13,10 +13,10 @@ struct VocalParams {
   float highPassHz = 75.0f;
   float darkness = 0.35f;
   float presence = 0.25f;
-  float compression = 0.30f; // 0..1
-  float drive = 0.12f;       // 0..1
-  float harmonicMix = 0.18f; // 0..1
-  float dryWet = 1.0f;       // 0..1
+  float compression = 0.30f;
+  float drive = 0.12f;
+  float harmonicMix = 0.18f;
+  float dryWet = 1.0f;
   PerformanceMode mode = PerformanceMode::Clean;
 };
 
@@ -41,6 +41,9 @@ private:
 
   double mSampleRate = 44100.0;
   float mHpCoeff = 0.99f;
+  float mToneCoeff = 0.03f;
+  float mAttackCoeff = 0.998f;
+  float mReleaseCoeff = 0.9998f;
   float mInputGain = 1.0f;
   float mOutputGain = 1.0f;
   float mCompAmount = 0.30f;
