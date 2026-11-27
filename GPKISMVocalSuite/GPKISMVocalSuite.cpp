@@ -166,7 +166,7 @@ void GPKISMVocalSuite::OnIdle()
     return;
 
   if (pending == 3) {
-    GetParam(kPreset)->Set(3);
+    SetParameterValue(kPreset, GetParam(kPreset)->ToNormalized(3));
     if (GetUI())
       GetUI()->SetAllControlsDirty();
     return;
